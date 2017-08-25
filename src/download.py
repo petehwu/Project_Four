@@ -94,49 +94,6 @@ def get_wikipedia_page_ids(category, cat_id, level=0):
                     get_wikipedia_page_ids(sub_cat, cat_id, level)
                     level +=1 
                     
-def old_get_wikipedia_page_ids(category, cat_id, level=0):
-    response_url = requests.get(generate_query(category))
-    response_url.json()
-    id_list = response_url.json()['query']['categorymembers']
-    for x in id_list:
-        pageid = x['pageid']
-        title = x['title']
-        title = title.replace("'", '"')
-        if ('Category:' not in title):
-            # check to see if page already exists.  If it does do not insert again
-            cursor.execute("""SELECT PAGEID FROM PAGE_INFO WHERE PAGEID = {};""".format(pageid))
-            page_exist = cursor.fetchall()
-            if not page_exist:
-                insert_stmt = """
-                       BEGIN;
-                       INSERT INTO PAGE_INFO VALUES ({},'{}');
-                       COMMIT;
-                   """.format(pageid, title)
-                cursor.execute(insert_stmt)
-            # from here, insert category_id and page_id into category_data table
-            rec_exist = cursor.execute(
-                """SELECT MAINCATEGORYID FROM CATEGORY_DATA WHERE MAINCATEGORYID = {} AND PAGEID = {};""".format(cat_id,
-                                                                                                                 pageid))
-            if not rec_exist:
-                insert_stmt = """
-                        BEGIN;
-                        INSERT INTO CATEGORY_DATA (MAINCATEGORYID, PAGEID, LEVEL) VALUES ('{}', {}, {});
-                        COMMIT;
-                    """.format(cat_id, pageid, level)
-                cursor.execute(insert_stmt)
-        else:
-            # if level > 0 decrease level by 1 and then make recursive call using sub-category as category
-            if level:
-                sub_cat = title.replace('Category:', '')
-                insert_subcat = """
-                    BEGIN;
-                    INSERT INTO CATEGORY_DATA (MAINCATEGORYID, PAGEID, SUBCATEGORY, LEVEL ) VALUES ({}, {}, '{}',{});
-                    COMMIT;
-                    """.format(cat_id, pageid, sub_cat, level)
-                cursor.execute(insert_subcat)
-                level -= 1
-                get_wikipedia_page_ids(sub_cat, cat_id, level)
-                level += 1
 
 
 def get_wikipedia_page_text():
