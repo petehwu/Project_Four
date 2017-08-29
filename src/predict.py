@@ -17,17 +17,20 @@ def make_page_prediction(url):
     response_url = requests.get(generate_page_query(url))
     page_id = list(response_url.json()['query']['pages'].keys())[0]
     if int(page_id) == -1:
-        print('Invalid URL given or wikipedia page not found')
-        return 0,0
+        print ('Invalid URL given or wikipedia page not found')
+        return('NA', 'NA')
     else:
         page_text = response_url.json()['query']['pages'][page_id]['extract']
+        if page_text == '':
+            print('Page has no text')
+            return('NA', 'NA')    
         X = tfidf_vec.transform([cleaner(page_text)])
-        predicted_category = prediction_model.predict(X)[0]
+        predicted_category = prediction_model.predict(X)[0]   
         proba_dict = {}
         for key, val in enumerate(prediction_model.classes_):
             proba_dict[val] = prediction_model.predict_proba(X)[0][key]
-        #print(proba_dict)
-        return predicted_category, proba_dict[predicted_category].round(3)
+        #print(proba_dict)   
+    return predicted_category, proba_dict[predicted_category].round(3)
 
 if __name__ == '__main__':
     numVar = len(argv)
