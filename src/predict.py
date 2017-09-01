@@ -1,7 +1,7 @@
 from sys import argv
 from helper import *
 
-tfidf_vec = joblib.load('/home/jovyan/pkl/tfidf_vec2.pkl')
+
 prediction_model = joblib.load('/home/jovyan/pkl/prediction_model2.pkl')
 
 def generate_page_query(url):
@@ -23,14 +23,14 @@ def make_page_prediction(url):
         page_text = response_url.json()['query']['pages'][page_id]['extract']
         if page_text == '':
             print('Page has no text')
-            return('NA', 'NA')    
-        X = tfidf_vec.transform([cleaner(page_text)])
-        predicted_category = prediction_model.predict(X)[0]   
+            return('NA', 'NA')
+        predicted_category = prediction_model.predict_proba([cleaner(page_text)])[0]
+        svd_prediction = prediction_model.predict([cleaner(page_text)])[0]
         proba_dict = {}
+        print(predicted_category)
         for key, val in enumerate(prediction_model.classes_):
-            proba_dict[val] = prediction_model.predict_proba(X)[0][key]
-        #print(proba_dict)   
-    return predicted_category, proba_dict[predicted_category].round(3)
+            proba_dict[val]= predicted_category[key]
+    return svd_prediction, proba_dict[svd_prediction]   
 
 if __name__ == '__main__':
     numVar = len(argv)
